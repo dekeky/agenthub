@@ -1,0 +1,12 @@
+/storage/
+/bin/
+*.exe
+.env
+.env.local
+agenthub-server.toml
+agenthub-cli.toml
+
+# Frontend
+web/node_modules/
+web/dist/
+web_backup/

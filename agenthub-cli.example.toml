@@ -1,0 +1,5 @@
+# AgentHub CLI 配置 — 复制为 agenthub-cli.toml 后修改
+
+url = "http://localhost:9093"
+# 上传 Agent 包时使用的 token，需与服务端 upload_token 一致
+upload_token = ""
