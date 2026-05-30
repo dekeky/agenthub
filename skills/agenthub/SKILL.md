@@ -16,7 +16,7 @@ metadata:
 - 工作目录有 `agenthub-cli.toml`（复制项目根目录 `agenthub-cli.example.toml`）
 - 已知本地 runtime category（通常 `picoclaw` 或 `openclaw`）
 
-只读命令不需要 `upload_token`。所有命令加 `--json`，stdout 为 JSON，stderr 为错误。
+只读命令（`list`、`categories`、`get`、`file`、`download`）不需要 `upload_token`。`upload`、`update`、`put-file`、`delete` 需要配置 `upload_token`。所有命令加 `--json`，stdout 为 JSON，stderr 为错误。
 
 **Flag 顺序**：所有 flag 必须在位置参数（`<agentName>`、文件路径）之前。
 
@@ -40,6 +40,7 @@ agenthub-cli --json list --category picoclaw
 
 ```bash
 agenthub-cli --json get <agentName>
+agenthub-cli --json get --version 1.0.0 <agentName>
 ```
 
 确认返回的 `category` 与本地 runtime 一致，并检查 `files[]`。
@@ -77,6 +78,28 @@ agenthub-cli --json upload --category picoclaw --version 1.0.0 <agentName> <zip-
 | `picoclaw` | `SKILL.md` 或 `AGENT.md` |
 | `openclaw` | `AGENT.md` |
 
+### 更新元信息（可选，需 upload_token）
+
+```bash
+agenthub-cli --json update --display-name "Title" --summary "..." [--category picoclaw] <agentName>
+```
+
+至少指定 `--display-name`、`--summary`、`--category` 之一。
+
+### 更新包内单文件（可选，需 upload_token）
+
+```bash
+agenthub-cli --json put-file <agentName> <path-in-package> --version VERSION [--file LOCAL]
+```
+
+未指定 `--file` 时从 stdin 读取内容。
+
+### 删除 agent（可选，需 upload_token）
+
+```bash
+agenthub-cli --json delete <agentName>
+```
+
 ## 标准流程
 
 ```bash
@@ -94,7 +117,7 @@ agenthub-cli --json install --expect-category picoclaw --dest ./agents/<agentNam
 
 ## 注意事项
 
-- **认证**：`upload` 需在 `agenthub-cli.toml` 配置 `upload_token`
+- **认证**：`upload`、`update`、`put-file`、`delete` 需在 `agenthub-cli.toml` 配置 `upload_token`
 - **安全**：`install` 会删除并覆盖 `--dest` 目录
 - **失败处理**：`category mismatch` 时不要安装；`config file not found` 时创建 `agenthub-cli.toml`
 - 本地使用优先 `install`，`download` 仅保存 ZIP

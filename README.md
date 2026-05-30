@@ -102,7 +102,7 @@ cp agenthub-cli.example.toml agenthub-cli.toml
 
 ```toml
 url = "http://localhost:9093"
-upload_token = "your-secret-token"   # 仅 upload 需要，与服务端一致
+upload_token = "your-secret-token"   # 写操作需要，与服务端一致
 ```
 
 构建 CLI：
@@ -122,14 +122,20 @@ agenthub-cli --json categories
 # 按运行时筛选
 agenthub-cli --json list --category picoclaw
 
-# 查看包详情与文件树
+# 查看包详情与文件树（可选指定历史版本）
 agenthub-cli --json get <agentName>
+agenthub-cli --json get --version 1.0.0 <agentName>
 
 # 安装到本地（建议始终带 --expect-category）
 agenthub-cli --json install --expect-category picoclaw --dest ./agents/<agentName> <agentName>
 
 # 上传 ZIP（需 upload_token）
 agenthub-cli --json upload --category picoclaw --version 1.0.0 <agentName> ./package.zip
+
+# 更新元信息 / 包内单文件 / 删除 agent（均需 upload_token）
+agenthub-cli --json update --display-name "Title" --summary "..." <agentName>
+agenthub-cli --json put-file <agentName> SKILL.md --version 1.0.0 --file ./SKILL.md
+agenthub-cli --json delete <agentName>
 ```
 
 ### 4. Web 界面（可选）
@@ -202,7 +208,7 @@ npm run build
 | 字段 | 默认值 | 说明 |
 |------|--------|------|
 | `url` | `http://localhost:8080`（示例文件为 9093） | Hub 根 URL |
-| `upload_token` | 空 | 覆盖配置的上传 token |
+| `upload_token` | 空 | 写操作（upload / update / put-file / delete）鉴权 token |
 
 环境变量：`AGENTHUB_CLI_CONFIG`、`AGENTHUB_SERVER_CONFIG` 可指向配置文件路径。
 

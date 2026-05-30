@@ -75,12 +75,47 @@ func (c *Client) ListCategories() ([]string, error) {
 	return out.Categories, nil
 }
 
-func (c *Client) GetAgent(agentName string) (hub.AgentDetail, error) {
+func (c *Client) GetAgent(agentName, version string) (hub.AgentDetail, error) {
+	path := "/api/hub/agents/" + url.PathEscape(agentName)
+	if v := strings.TrimSpace(version); v != "" {
+		path += "?version=" + url.QueryEscape(v)
+	}
 	var out hub.AgentDetail
-	if err := c.getJSON("/api/hub/agents/"+url.PathEscape(agentName), &out); err != nil {
+	if err := c.getJSON(path, &out); err != nil {
 		return hub.AgentDetail{}, err
 	}
 	return out, nil
+}
+
+type UpdateMetaRequest struct {
+	DisplayName string `json:"displayName,omitempty"`
+	Summary     string `json:"summary,omitempty"`
+	Category    string `json:"category,omitempty"`
+}
+
+func (c *Client) UpdateAgentMeta(agentName string, req UpdateMetaRequest) (hub.AgentMeta, error) {
+	path := "/api/hub/agents/" + url.PathEscape(agentName)
+	var out hub.AgentMeta
+	if err := c.putJSON(path, req, &out); err != nil {
+		return hub.AgentMeta{}, err
+	}
+	return out, nil
+}
+
+type UpdateFileRequest struct {
+	Version string `json:"version"`
+	Content string `json:"content"`
+}
+
+func (c *Client) UpdateFile(agentName, version, filePath string, content []byte) error {
+	path := fmt.Sprintf("/api/hub/agents/%s/files/%s", url.PathEscape(agentName), escapePath(filePath))
+	req := UpdateFileRequest{Version: version, Content: string(content)}
+	return c.putJSON(path, req, nil)
+}
+
+func (c *Client) DeleteAgent(agentName string) error {
+	path := "/api/hub/agents/" + url.PathEscape(agentName)
+	return c.deleteJSON(path)
 }
 
 func (c *Client) GetPackageFile(agentName, version, path string) ([]byte, error) {
@@ -178,6 +213,39 @@ func (c *Client) getJSON(path string, out any) error {
 	if err != nil {
 		return err
 	}
+	return c.doJSON(req, out)
+}
+
+func (c *Client) putJSON(path string, body any, out any) error {
+	var payload io.Reader
+	if body != nil {
+		b, err := json.Marshal(body)
+		if err != nil {
+			return err
+		}
+		payload = bytes.NewReader(b)
+	}
+	req, err := http.NewRequest(http.MethodPut, c.baseURL+path, payload)
+	if err != nil {
+		return err
+	}
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	c.setAuth(req)
+	return c.doJSON(req, out)
+}
+
+func (c *Client) deleteJSON(path string) error {
+	req, err := http.NewRequest(http.MethodDelete, c.baseURL+path, nil)
+	if err != nil {
+		return err
+	}
+	c.setAuth(req)
+	return c.doJSON(req, nil)
+}
+
+func (c *Client) doJSON(req *http.Request, out any) error {
 	resp, err := c.http.Do(req)
 	if err != nil {
 		return err
